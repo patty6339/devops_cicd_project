@@ -107,6 +107,22 @@ jobs:
             echo "Starting container..."
             sudo docker run -d --name myappcontainer -p 80:8080 "$REGISTRY/$REPOSITORY:$IMAGE_TAG"
             echo "Container started successfully"
+            
+            # Verify the container is running
+            echo "\nVerifying container status:"
+            sudo docker ps | grep myappcontainer
+            
+            # Check container logs
+            echo "\nContainer logs:"
+            sudo docker logs myappcontainer --tail 20
+            
+            # Check if the application is responding
+            echo "\nTesting application response:"
+            sleep 5 # Give the app a moment to start
+            curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" http://localhost:80/
+            
+            echo "\nApplication URL: http://$HOSTNAME/"
+            echo "You can access the application at: http://$(curl -s http://checkip.amazonaws.com)/"
          
 
   

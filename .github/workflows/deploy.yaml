@@ -73,22 +73,22 @@ jobs:
          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
         working-directory: ./nodeapp
       - name: Deploy docker image to EC2
+        uses: appleboy/ssh-action@master
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: first-node-app
           IMAGE_TAG: ${{ github.sha }}
           AWS_DEFAULT_REGION: us-east-1
-        uses: appleboy/scp-action@master
         with:
           host: ${{ env.SERVER_PUBLIC_IP }}
           username: ubuntu
           key: ${{ secrets.AWS_SSH_KEY_PRIVATE }}
-          envs: PRIVATE_SSH_KEY,REGISTRY,REPOSITORY,IMAGE_TAG,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_DEFAULT_REGION,AWS_REGION
-          script: |-
+          envs: REGISTRY,REPOSITORY,IMAGE_TAG,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_DEFAULT_REGION
+          script: |
             sudo apt update
             sudo apt install docker.io -y
             sudo apt install awscli -y
-            sudo $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION);
+            sudo aws ecr get-login-password --region $AWS_DEFAULT_REGION | sudo docker login --username AWS --password-stdin $REGISTRY
             sudo docker stop myappcontainer || true
             sudo docker rm myappcontainer || true
             sudo docker pull $REGISTRY/$REPOSITORY:$IMAGE_TAG

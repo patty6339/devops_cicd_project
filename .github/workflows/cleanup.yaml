@@ -34,11 +34,8 @@ jobs:
 
       - name: Terraform Destroy
         id: destroy
-        run: terraform destroy -auto-approve \
-          -var="region=us-east-1" \
-          -var="public_key=$PUBLIC_SSH_KEY" \
-          -var="private_key=$PRIVATE_SSH_KEY" \
-          -var="key_name=iamadmin-keypair-general-useast1"
+        run: |
+          terraform destroy -auto-approve -var="region=us-east-1" -var="public_key=$PUBLIC_SSH_KEY" -var="private_key=$PRIVATE_SSH_KEY" -var="key_name=iamadmin-keypair-general-useast1"
         working-directory: ./terraform
 
       - name: Delete ECR Repository

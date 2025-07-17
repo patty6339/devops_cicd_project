@@ -72,6 +72,10 @@ jobs:
          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
         working-directory: ./nodeapp
+      - name: Get ECR Auth Token
+        id: get-ecr-token
+        run: echo "::set-output name=token::$(aws ecr get-login-password --region us-east-1)"
+        
       - name: Deploy docker image to EC2
         uses: appleboy/ssh-action@master
         env:
@@ -79,27 +83,21 @@ jobs:
           REPOSITORY: first-node-app
           IMAGE_TAG: ${{ github.sha }}
           AWS_DEFAULT_REGION: us-east-1
+          ECR_TOKEN: ${{ steps.get-ecr-token.outputs.token }}
         with:
           host: ${{ env.SERVER_PUBLIC_IP }}
           username: ubuntu
           key: ${{ secrets.AWS_SSH_KEY_PRIVATE }}
-          envs: REGISTRY,REPOSITORY,IMAGE_TAG,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_DEFAULT_REGION
+          envs: REGISTRY,REPOSITORY,IMAGE_TAG,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_DEFAULT_REGION,ECR_TOKEN
           script: |
             sudo apt update
             sudo apt install docker.io -y
-            # Install AWS CLI v2 instead of using apt
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            sudo apt install unzip -y
-            unzip awscliv2.zip
-            sudo ./aws/install
-            # Configure AWS credentials and authenticate with ECR
-            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
-            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
-            aws configure set region "$AWS_DEFAULT_REGION"
+            # Direct Docker login with ECR token from GitHub Actions
+            echo "$ECR_TOKEN" | sudo docker login --username AWS --password-stdin "$REGISTRY"
             
-            # Get ECR login password and login to Docker
-            ECR_LOGIN_PASSWORD=$(aws ecr get-login-password --region "$AWS_DEFAULT_REGION")
-            echo "$ECR_LOGIN_PASSWORD" | sudo docker login --username AWS --password-stdin "$REGISTRY"
+            # Verify Docker can access ECR
+            echo "Testing Docker authentication to ECR..."
+            sudo docker info
             # Handle container management with proper error checking
             sudo docker stop myappcontainer || echo "Container not running, proceeding..."
             sudo docker rm myappcontainer || echo "Container not found, proceeding..."

@@ -92,20 +92,23 @@ jobs:
             sudo apt install unzip -y
             unzip awscliv2.zip
             sudo ./aws/install
-            # Configure AWS credentials for ECR authentication
-            mkdir -p ~/.aws
-            echo "[default]" > ~/.aws/credentials
-            echo "aws_access_key_id=$AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
-            echo "aws_secret_access_key=$AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
-            echo "region=$AWS_DEFAULT_REGION" >> ~/.aws/config
-            # Login to ECR non-interactively
-            aws ecr get-login-password --region $AWS_DEFAULT_REGION | sudo docker login --username AWS --password-stdin $REGISTRY
+            # Configure AWS credentials and authenticate with ECR
+            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
+            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+            aws configure set region "$AWS_DEFAULT_REGION"
+            
+            # Get ECR login password and login to Docker
+            ECR_LOGIN_PASSWORD=$(aws ecr get-login-password --region "$AWS_DEFAULT_REGION")
+            echo "$ECR_LOGIN_PASSWORD" | sudo docker login --username AWS --password-stdin "$REGISTRY"
             # Handle container management with proper error checking
             sudo docker stop myappcontainer || echo "Container not running, proceeding..."
             sudo docker rm myappcontainer || echo "Container not found, proceeding..."
-            # Pull and run the container
-            sudo docker pull $REGISTRY/$REPOSITORY:$IMAGE_TAG
-            sudo docker run -d --name myappcontainer -p 80:8080 $REGISTRY/$REPOSITORY:$IMAGE_TAG
+            # Pull and run the container with explicit error handling
+            echo "Pulling image from $REGISTRY/$REPOSITORY:$IMAGE_TAG"
+            sudo docker pull "$REGISTRY/$REPOSITORY:$IMAGE_TAG"
+            echo "Starting container..."
+            sudo docker run -d --name myappcontainer -p 80:8080 "$REGISTRY/$REPOSITORY:$IMAGE_TAG"
+            echo "Container started successfully"
          
 
   

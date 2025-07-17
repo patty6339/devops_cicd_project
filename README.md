@@ -162,3 +162,5 @@ Fix by updating the Dockerfile:
 - Try accessing the application from a different network
 - Check if your corporate firewall is blocking the connection
 - Try using a VPN or mobile hotspot
+
+### Trying again after destroying the infra

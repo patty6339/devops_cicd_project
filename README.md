@@ -4,6 +4,23 @@ This project implements a CI/CD pipeline using GitHub Actions, Terraform, Docker
 
 ## Running the Application
 
+### Option 0: Cleaning Up Resources
+
+To destroy all resources created by this project:
+
+1. Go to your GitHub repository
+2. Navigate to Actions tab
+3. Select the "Cleanup Resources" workflow
+4. Click "Run workflow"
+5. Type "destroy" in the confirmation field
+6. Click "Run workflow"
+
+This will:
+- Destroy all Terraform-managed infrastructure (EC2, security groups, etc.)
+- Delete the ECR repository and all images
+
+**Note:** This action is irreversible and will delete all resources!
+
 ### Option 1: Using GitHub Actions CI/CD Pipeline
 
 1. Push changes to the main branch to trigger the workflow
